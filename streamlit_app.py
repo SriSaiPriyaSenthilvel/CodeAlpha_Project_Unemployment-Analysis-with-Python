@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import zipfile
 
-# Function to load data
 def load_data():
     zip_path = os.path.join(os.getcwd(), "archive (3).zip")
     csv_filename = "Unemployment_Rate_upto_11_2020.csv"
@@ -22,11 +21,9 @@ def load_data():
         with z.open(csv_filename) as file:
             df = pd.read_csv(file, encoding='utf-8')
     
-    # Strip spaces from column names & values
     df.columns = df.columns.str.strip()
     df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     
-    # Ensure correct column names
     expected_columns = ['Date', 'Region', 'Estimated Unemployment Rate (%)']
     df.columns = [col.strip() for col in df.columns]
     missing_columns = [col for col in expected_columns if col not in df.columns]
@@ -35,25 +32,29 @@ def load_data():
         st.error(f"Missing expected columns: {missing_columns}. Check your dataset.")
         return None
     
-    # Convert Date column to datetime
     df["Date"] = pd.to_datetime(df["Date"].astype(str).str.strip(), format="%d-%m-%Y", dayfirst=True, errors='coerce')
-    df.dropna(subset=["Date"], inplace=True)  # Drop rows with invalid dates
+    df.dropna(subset=["Date"], inplace=True)  
     
-    # Ensure 'Estimated Unemployment Rate (%)' is numeric
     df["Estimated Unemployment Rate (%)"] = pd.to_numeric(df["Estimated Unemployment Rate (%)"], errors='coerce')
     df.dropna(subset=["Estimated Unemployment Rate (%)"], inplace=True)
     
     return df
 
-# Streamlit UI
 st.set_page_config(page_title="Unemployment Rate Analysis", layout="wide")
 st.title("📊 Unemployment Rate Analysis")
 
-# Load Data
 df = load_data()
+
 if df is not None:
-    # Show raw data
     st.sidebar.header("🔍 Filters")
+
+    # ✅ Adding Sidebar Image
+    image_path = "e.png"
+    try:
+        st.sidebar.image(image_path, use_container_width=True)
+    except Exception as e:
+        st.sidebar.warning(f"⚠️ Unable to load image: {e}")
+
     regions = df['Region'].dropna().unique().tolist()
     selected_region = st.sidebar.selectbox("Select Region", ["All"] + regions)
     
@@ -63,7 +64,6 @@ if df is not None:
     st.subheader("📝 Raw Data Preview")
     st.dataframe(df.head())
     
-    # Summary Metrics
     st.subheader("📈 Unemployment Statistics")
     if not df.empty:
         col1, col2, col3 = st.columns(3)
@@ -73,7 +73,6 @@ if df is not None:
     else:
         st.warning("No data available for the selected region.")
     
-    # Visualization
     st.subheader("📉 Unemployment Trend")
     if not df.empty:
         fig, ax = plt.subplots(figsize=(12,6))
@@ -84,6 +83,13 @@ if df is not None:
         plt.xticks(rotation=45)
         plt.grid(True)
         st.pyplot(fig)
+
+        highest_unemployment = df.loc[df['Estimated Unemployment Rate (%)'].idxmax()]
+        high_unemployment_period = highest_unemployment["Date"].year
+        if high_unemployment_period == 2020:
+            st.warning("🚨 The highest unemployment rate was recorded in 2020, during the COVID-19 pandemic.")
+        else:
+            st.warning(f"🚨 The highest unemployment rate was recorded in {high_unemployment_period}.")
         
         st.subheader("📊 Data Distribution")
         fig, ax = plt.subplots(figsize=(8,5))
@@ -93,6 +99,5 @@ if df is not None:
         plt.grid(True)
         st.pyplot(fig)
     
-    # Show DataFrame
     st.subheader("📋 Filtered Data")
     st.dataframe(df)
