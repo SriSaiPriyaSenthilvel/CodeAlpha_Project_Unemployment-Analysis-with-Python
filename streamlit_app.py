@@ -43,6 +43,7 @@ def load_data():
 st.set_page_config(page_title="Unemployment Rate Analysis", layout="wide")
 st.title("📊 Unemployment Rate Analysis")
 
+# Load Data
 df = load_data()
 
 if df is not None:
@@ -84,6 +85,7 @@ if df is not None:
         plt.grid(True)
         st.pyplot(fig)
 
+        # ✅ Adding a statement on high unemployment periods
         highest_unemployment = df.loc[df['Estimated Unemployment Rate (%)'].idxmax()]
         high_unemployment_period = highest_unemployment["Date"].year
         if high_unemployment_period == 2020:
